@@ -21,7 +21,7 @@ import random
 gridW, gridH = 4, 3
 start_pos = (0, 0)
 end_positions = [(3, 1), (3, 2)]
-end_rewards = [-10.0, 10.0]
+end_rewards = [-50.0, 10.0]
 blocked_positions = [(1,1)]
 default_reward= -1.0
 
@@ -36,13 +36,15 @@ discount = 0.99
 action_space = env.action_space
 state_space = env.state_space
 
-agent = agent.QLearningAgent(alpha, epsilon, discount, env)
+agent = agent.MCValueEstimator(alpha, epsilon, discount, env)
 
 # Learning -----------
 env.render(agent)
 state = env.get_state()
 
 while(True):
+
+	input("Step ")
 
 	action = agent.get_explore_action(state)
 	next_state, reward, done = env.step(action)

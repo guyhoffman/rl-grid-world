@@ -31,6 +31,16 @@ class BasePolicy:
 # ------------------------------------- Specific Policies ----------------------------------
 # ------------------------------------------------------------------------------------------
 
+class FixedRandomPolicy(BasePolicy):
+	def __init__ (self, state_space, action_space):
+		super().__init__(state_space, action_space)
+		self.actions = np.random.randint(0, action_space, (state_space,))
+
+	def step(self, state):
+		return 	self.actions[state]
+
+# ------------------------------------------------------------------------------------------
+
 class RandomPolicy(BasePolicy):
 	def step(self, state):
 		return 	random.choice(range(self.action_space))

@@ -45,6 +45,21 @@ class BaseAgent:
 
 
 
+
+
+class MCValueEstimator(BaseAgent):
+	def __init__(self, alpha, epsilon, discount, env):
+		super().__init__(alpha,	epsilon, discount, env)
+
+		self.policy = policy.FixedRandomPolicy(env.state_space, env.action_space) 
+		self.explore_policy = self.policy 
+	
+	def update(self, state, action, reward, next_state, done):
+		qval_old = self.qvalues[state][action]      
+		qval = reward + self.discount * ((1.0 - self.alpha)* qval_old + self.alpha * self.qvalues[next_state][action])
+		self.qvalues[state][action] = qval
+
+
 # ------------------------------------------------------------------------------------------
 # ---------------------------------- First-Value MC Prediction -----------------------------
 # ------------------------------------------------------------------------------------------

@@ -19,43 +19,74 @@ import random
 # default_reward = -0.1
 
 gridW, gridH = 4, 3
-start_pos = (0, 0)
+start_pos = None # (0, 0)
 end_positions = [(3, 1), (3, 2)]
 end_rewards = [-50.0, 10.0]
 blocked_positions = [(1,1)]
 default_reward= -1.0
 
-
-scale=100
+scale=150
 env = environment.Environment(gridW, gridH, end_positions, end_rewards, blocked_positions, start_pos, default_reward, scale)
 
 # Agent -------------
 alpha = 0.2
-epsilon = 0.25
+epsilon = 0.2
 discount = 0.99
 action_space = env.action_space
 state_space = env.state_space
 
-agent = agent.MCValueEstimator(alpha, epsilon, discount, env)
+agent = agent.SARSAAgent(alpha, epsilon, discount, env)
 
 # Learning -----------
+env.reset_state()
 env.render(agent)
-state = env.get_state()
 
+n = 3
 while(True):
+    input("------- Episode -------- ")
 
-	input("Step ")
+    states = np.full(n+1, np.nan)
+    actions = np.full(n+1, np.nan)
+    rewards = np.full(n+1, np.nan)
+    state = env.get_state()
+    states[0] = state
+    print("initial state is", state)
+    action = agent.get_explore_action(state)
+    print("taking action", action)
+    actions[0] = action
+    T = np.infty
 
-	action = agent.get_explore_action(state)
-	next_state, reward, done = env.step(action)
-	env.render(agent)
-
-	agent.update(state, action, reward, next_state, done)
-	state = next_state
-
-	if done == True:	
-		env.reset_state()
-		env.render(agent)
-		state = env.get_state()
-		continue
+    t = 0
+    tau = 0
+    while (tau < T - 1):
+        print("t=",t, ", tau=", tau, "T=", T)
+        print("states=",states)
+        print("actions=",actions)
+        print("rewards=",rewards)
+        input(" --- Step ")
+        next_state, reward, done = env.step(action)
+        print("ended up in state", next_state,"with reward", reward )
+        rewards[(t + 1) % n] = reward
+        states[(t + 1) % n] = next_state
+        print("states=",states)
+        print("actions=",actions)
+        print("rewards=",rewards)
+        if done == True:
+            T = t + 1
+        else:
+            print("next state is", state)
+            action = agent.get_explore_action(next_state)
+            print("next action is", action)
+            actions[(t + 1) % n] = action
+        tau = t - n + 1
+        if tau >= 0:
+            print("updating Q values")
+            G = 0
+            for i in range(tau+1, min(tau+n, T)):
+                G += discount**(i-tau-1) * rewards[i % n]
+            if tau + n < T:
+                G += discount**n * agent.qvalues[states[(tau + n) % n]][actions[ (tau + n) % n ]]
+                agent.qvalues[states[tau % n]][actions[tau % n]] = (1 - alpha) * agent.qvalues[states[tau % n]][actions[tau % n]] + alpha * G  
+        t = t + 1
+        env.render(agent)
 

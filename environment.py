@@ -42,7 +42,6 @@ class Environment(object):
                 self.state2idx[(x, y)] = idx
                 self.idx2state[idx] = (x, y)
                 self.idx2reward[idx] = default_reward
-
         for position, reward in zip(self.end_positions, self.end_rewards):
             self.idx2reward[self.state2idx[position]] = reward
 
@@ -76,7 +75,7 @@ class Environment(object):
 
         while True:
 
-            preposition = (np.random.choice(self.gridH), np.random.choice(self.gridW))
+            preposition = (np.random.choice(self.gridW), np.random.choice(self.gridH))
 
             if preposition not in self.end_positions and preposition not in self.blocked_positions:
 
@@ -187,7 +186,7 @@ class Environment(object):
             cv2.line(frame, self.pos_to_frame((x+1,y)), self.pos_to_frame((x,y+1)), (255, 255, 255), 2)
 
             # draw arrows indicating policy or best action
-            draw_action = agent.get_policy_action(idx)
+            draw_action = agent.get_draw_policy_action(idx)
 
             if draw_action == 0:
                 start, end  = (x+.5, y+.4), (x+.5, y+.6)

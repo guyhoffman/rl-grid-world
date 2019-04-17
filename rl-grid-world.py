@@ -44,9 +44,11 @@ env.render(agent)
 n = 3
 while(True):
     input("------- Episode -------- ")
+    env.reset_state()
+    env.render(agent)
 
-    states = np.full(n+1, np.nan)
-    actions = np.full(n+1, np.nan)
+    states = np.full(n+1, -1).astype(int)
+    actions = np.full(n+1, -1).astype(int)
     rewards = np.full(n+1, np.nan)
     state = env.get_state()
     states[0] = state
@@ -66,27 +68,29 @@ while(True):
         input(" --- Step ")
         next_state, reward, done = env.step(action)
         print("ended up in state", next_state,"with reward", reward )
-        rewards[(t + 1) % n] = reward
-        states[(t + 1) % n] = next_state
+        rewards[(t + 1) % (n + 1)] = reward
+        states[(t + 1) % (n + 1)] = next_state
         print("states=",states)
         print("actions=",actions)
         print("rewards=",rewards)
-        if done == True:
+        if done == True and T == np.infty:
             T = t + 1
         else:
             print("next state is", state)
             action = agent.get_explore_action(next_state)
             print("next action is", action)
-            actions[(t + 1) % n] = action
+            actions[(t + 1) % (n + 1)] = action
         tau = t - n + 1
         if tau >= 0:
-            print("updating Q values")
+            print("**** Updating Q values for", (tau), "(", tau % (n + 1), ")")
             G = 0
-            for i in range(tau+1, min(tau+n, T)):
-                G += discount**(i-tau-1) * rewards[i % n]
+            for i in range(tau+1, min(tau+n, T)+1):
+                G += discount**(i-tau-1) * rewards[i % (n + 1)]
+                print ("Discounted rewards are:", G)
             if tau + n < T:
-                G += discount**n * agent.qvalues[states[(tau + n) % n]][actions[ (tau + n) % n ]]
-                agent.qvalues[states[tau % n]][actions[tau % n]] = (1 - alpha) * agent.qvalues[states[tau % n]][actions[tau % n]] + alpha * G  
+                G += discount**n * agent.qvalues[states[(tau + n) % (n + 1)]][actions[ (tau + n) % (n+1) ]]
+                print ("Adding Q estimate for n+1 results in:", G)
+                agent.qvalues[states[tau % (n+1)]][actions[tau % (n+1)]] = (1 - alpha) * agent.qvalues[states[tau % (n+1)]][actions[tau % (n+1)]] + alpha * G  
         t = t + 1
         env.render(agent)
 

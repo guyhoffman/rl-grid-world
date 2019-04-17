@@ -86,7 +86,6 @@ class Environment(object):
 
     def step(self, action):
 
-        print("Taking step from: ", self.position)
         if action >= self.action_space:
             return
 
@@ -105,22 +104,22 @@ class Environment(object):
         x_within = proposed[0] >= 0 and proposed[0] < self.gridW
         y_within = proposed[1] >= 0 and proposed[1] < self.gridH
         free = proposed not in self.blocked_positions
+        terminal =  self.position in self.end_positions
 
-        if self.position in self.end_positions:
-            print ("In terminal position: ", self.position, "next is", proposed)
-            done = True
-            if self.position == proposed:
-                print ("Didn't change from terminal pos")
-                reward = 0
-        else:
-            done = False
-
-        if x_within and y_within and free:
+        print ("Should move from", self.position, "to", proposed,"?")
+        if x_within and y_within and free and not terminal:
+            print ("Yes")
             self.position = proposed
 
         next_state = self.state2idx[self.position]
         reward = self.idx2reward[next_state]
 
+        if terminal:
+            print ("I'm moving from terminal so")
+            done = True
+            reward = 0
+        else:
+            done = False
 
         return next_state, reward, done
 

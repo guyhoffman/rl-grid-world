@@ -18,14 +18,14 @@ import random
 # blocked_positions = [(2, i) for i in range(3)] + [(6, i) for i in range(4, 7)]
 # default_reward = -0.1
 
-gridW, gridH = 4, 3
+gridW, gridH = 6, 6
 start_pos = None # (0, 0)
 end_positions = [(3, 1), (3, 2)]
 end_rewards = [-50.0, 10.0]
-blocked_positions = [(1,1)]
+blocked_positions = [(1,1),(2,2),(4,5),(3,5)]
 default_reward= -1.0
 
-scale=150
+scale=110
 env = environment.Environment(gridW, gridH, end_positions, end_rewards, blocked_positions, start_pos, default_reward, scale)
 
 # Agent -------------
@@ -41,9 +41,9 @@ agent = agent.SARSAAgent(alpha, epsilon, discount, env)
 env.reset_state()
 env.render(agent)
 
-n = 3
+n = 10
 while(True):
-    input("------- Episode -------- ")
+#    input("------- Episode -------- ")
     env.reset_state()
     env.render(agent)
 
@@ -65,7 +65,7 @@ while(True):
         print("states=",states)
         print("actions=",actions)
         print("rewards=",rewards)
-        input(" --- Step ")
+#        input(" --- Step ")
         next_state, reward, done = env.step(action)
         print("ended up in state", next_state,"with reward", reward )
         rewards[(t + 1) % (n + 1)] = reward
@@ -76,7 +76,7 @@ while(True):
         if done == True and T == np.infty:
             T = t + 1
         else:
-            print("next state is", state)
+            print("next state is", next_state)
             action = agent.get_explore_action(next_state)
             print("next action is", action)
             actions[(t + 1) % (n + 1)] = action
@@ -90,7 +90,7 @@ while(True):
             if tau + n < T:
                 G += discount**n * agent.qvalues[states[(tau + n) % (n + 1)]][actions[ (tau + n) % (n+1) ]]
                 print ("Adding Q estimate for n+1 results in:", G)
-                agent.qvalues[states[tau % (n+1)]][actions[tau % (n+1)]] = (1 - alpha) * agent.qvalues[states[tau % (n+1)]][actions[tau % (n+1)]] + alpha * G  
+            agent.qvalues[states[tau % (n+1)]][actions[tau % (n+1)]] = (1 - alpha) * agent.qvalues[states[tau % (n+1)]][actions[tau % (n+1)]] + alpha * G  
         t = t + 1
         env.render(agent)
 

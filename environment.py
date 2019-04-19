@@ -1,7 +1,9 @@
 import numpy as np
 import cv2
 import sys
+import json
 
+ENV_JSON_FILE = "envs.json"
 
 class Environment(object):
     """
@@ -15,24 +17,36 @@ class Environment(object):
     Actions are indexed from 0 (North) and then clockwise
     """
 
-    def __init__(self, gridW, gridH, end_positions, end_rewards, blocked_positions, start_position, default_reward, scale=100):
+    def __init__(self, env_name, start_position=None, scale=100):
 
+        # Initialize grid parameters from JSON file
+        with open(ENV_JSON_FILE) as f:
+            envs = json.load(f)
+            for k,v in envs[env_name].items():
+                 vars(self)[k] = v 
+
+        self.end_positions = [tuple(l) for l in self.end_positions]
+        self.blocked_positions = [tuple(l) for l in self.blocked_positions]
+
+        # Non-JSON grid parameters
+        self.state_space = self.gridW * self.gridH
         self.action_space = 4
-        self.state_space = gridH * gridW
-        self.gridH = gridH
-        self.gridW = gridW
+        self.start_position = start_position
         self.scale = scale
 
-        self.end_positions = end_positions
-        self.end_rewards = end_rewards
-        self.blocked_positions = blocked_positions
-
-        self.start_position = start_position
+        # Start state
         if self.start_position is None:
             self.position = self.init_start_state()
         else:
             self.position = self.start_position
 
+        # Initialize quick-lookup lists 
+        self.init_lookup_lists()
+
+        # Generate fixed background render frame
+        self.render_background()
+
+    def init_lookup_lists(self):
         self.state2idx = {}
         self.idx2state = {}
         self.idx2reward = {}
@@ -41,10 +55,23 @@ class Environment(object):
                 idx = y * self.gridW + x
                 self.state2idx[(x, y)] = idx
                 self.idx2state[idx] = (x, y)
-                self.idx2reward[idx] = default_reward
+                self.idx2reward[idx] = self.default_reward
         for position, reward in zip(self.end_positions, self.end_rewards):
             self.idx2reward[self.state2idx[position]] = reward
 
+    # Helper functions for rendering
+    def pos_to_frame(self, pos):
+        return (int((pos[0] + 0.0) * self.scale), int((self.gridH - pos[1] + 0.0) * self.scale))
+
+    def text_to_frame(self, frame, text, pos, color=(255, 255, 255), fontscale=1, thickness=2):
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        (w, h), _ = cv2.getTextSize(text, font, fontscale, thickness)
+        textpos = (int((pos[0] + 0.0) * self.scale - w / 2), int((self.gridH - pos[1] + 0.0) * self.scale + h / 2))
+        cv2.putText(frame, text, textpos, font, fontscale, color, thickness, cv2.LINE_AA)
+
+    # Rendering the fixed background (happens once)
+    def render_background(self):
+        
         self.frame = np.zeros((self.gridH * self.scale, self.gridW * self.scale, 3), np.uint8)
 
         for position in self.blocked_positions:
@@ -62,23 +89,12 @@ class Environment(object):
             x, y = position
             self.text_to_frame(self.frame, text, (x + .5, y + .5), color)
 
-    def pos_to_frame(self, pos):
-        return (int((pos[0] + 0.0) * self.scale), int((self.gridH - pos[1] + 0.0) * self.scale))
-
-    def text_to_frame(self, frame, text, pos, color=(255, 255, 255), fontscale=1, thickness=2):
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        (w, h), _ = cv2.getTextSize(text, font, fontscale, thickness)
-        textpos = (int((pos[0] + 0.0) * self.scale - w / 2), int((self.gridH - pos[1] + 0.0) * self.scale + h / 2))
-        cv2.putText(frame, text, textpos, font, fontscale, color, thickness, cv2.LINE_AA)
-
     def init_start_state(self):
 
         while True:
-
             preposition = (np.random.choice(self.gridW), np.random.choice(self.gridH))
 
             if preposition not in self.end_positions and preposition not in self.blocked_positions:
-
                 return preposition
 
     def get_state(self):
@@ -128,103 +144,34 @@ class Environment(object):
         else:
             self.position = self.start_position
 
+    # Render agent and post-production (gridlines and state)
     def render(self, agent):
 
         frame = self.frame.copy()
+        frame = agent.render(self, frame)
 
-        # for each state cell
-        # print (np.min(qvalues_matrix), '->', np.max(qvalues_matrix))
-
-        for idx, qvalues in enumerate(agent.qvalues):
-            position = self.idx2state[idx]
-
-            if position in self.end_positions or position in self.blocked_positions:
-                continue
-
-            x, y = position
-
-            # for each action in state cell
-            for action, qvalue in enumerate(qvalues):
-
-                tanh_qvalue = np.tanh(qvalue * 0.1)  # for vizualization only
-
-                # draw (state, action) qvalue traingle
-
-                if action == 0:
-                    dx2, dy2, dx3, dy3, dqx, dqy = 0.0, 1.0, 1.0, 1.0, .5, .85
-                if action == 1:
-                    dx2, dy2, dx3, dy3, dqx, dqy = 1.0, 0.0, 1.0, 1.0, .85, .5
-                if action == 2:
-                    dx2, dy2, dx3, dy3, dqx, dqy = 0.0, 0.0, 1.0, 0.0, .5, .15
-                if action == 3:
-                    dx2, dy2, dx3, dy3, dqx, dqy = 0.0, 0.0, 0.0, 1.0, .15, .5
-
-                p1 = self.pos_to_frame((x + 0.5, y + 0.5))
-                p2 = self.pos_to_frame((x + dx2, y + dy2))
-                p3 = self.pos_to_frame((x + dx3, y + dy3))
-
-                # pts = np.array([[x1, y1], [x2, y2], [x3, y3]], np.int32)
-                # pts = pts.reshape((-1, 1, 2))
-                pts = np.array([list(p1), list(p2), list(p3)], np.int32)
-
-                if tanh_qvalue > 0:
-                    color = (0, int(tanh_qvalue * 255), 0)
-                elif tanh_qvalue < 0:
-                    color = (0, 0, -int(tanh_qvalue * 255))
-                else: 
-                    color = (0, 0, 0)
-
-                cv2.fillPoly(frame, [pts], color)
-
-                qtext = "{:5.2f}".format(qvalue)
-                if qvalue > 0.0:
-                    qtext = '+' + qtext
-                self.text_to_frame(frame, qtext, (x+dqx, y+dqy), (255,255,255), 0.4, 1)
-
+        for i in range(self.state_space):
             # draw crossed lines
+            x, y = self.idx2state[i]
+
             cv2.line(frame, self.pos_to_frame((x,y)), self.pos_to_frame((x+1,y+1)), (255, 255, 255), 2)
             cv2.line(frame, self.pos_to_frame((x+1,y)), self.pos_to_frame((x,y+1)), (255, 255, 255), 2)
 
-            # draw arrows indicating policy or best action
-            draw_action = agent.get_draw_policy_action(idx)
-
-            if draw_action == 0:
-                start, end  = (x+.5, y+.4), (x+.5, y+.6)
-
-            elif draw_action == 1:
-                start, end  = (x+.4, y+.5), (x+.6, y+.5)
-
-            elif draw_action == 2:
-                start, end  = (x+.5, y+.6), (x+.5, y+.4)
-
-            elif draw_action == 3:
-                start, end  = (x+.6, y+.5), (x+.4, y+.5)
-
-            cv2.arrowedLine(frame, self.pos_to_frame(start), self.pos_to_frame(end), (255,155,155), 8, line_type=8, tipLength=0.9)
-
         # draw horizontal lines
-
         for i in range(self.gridH+1):
             cv2.line(frame, (0, i*self.scale), (self.gridW * self.scale, i*self.scale), (255, 255, 255), 2)
 
         # draw vertical lines
-
         for i in range(self.gridW+1):
             cv2.line(frame, (i*self.scale, 0), (i*self.scale, self.gridH * self.scale), (255, 255, 255), 2)
 
-        # draw agent
-
+        # draw agent position (state)
         x, y = self.position
-
-        # y1 = int((y + 0.3)*self.scale)
-        # x1 = int((x + 0.3)*self.scale)
-        # y2 = int((y + 0.7)*self.scale)
-        # x2 = int((x + 0.7)*self.scale)
 
         cv2.rectangle(frame, self.pos_to_frame((x+.3, y+.3)), self.pos_to_frame((x+.7, y+.7)), (255, 255, 0), 3)
 
+        # render everything
         cv2.imshow('frame', frame)
-        # cv2.moveWindow('frame', 0, 0)
         key = cv2.waitKey(1)
         if key == 27: sys.exit()
 

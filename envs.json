@@ -16,6 +16,7 @@
             ],
             "default_reward" : -0.2
         },
+
     "fourbythree" : {
         "gridW" : 4,
         "gridH" : 3,

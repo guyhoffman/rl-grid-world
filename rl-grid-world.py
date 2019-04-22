@@ -11,7 +11,7 @@ env = environment.Environment("fourbythree", scale=SCALE)
 alpha = 0.2
 discount = 0.99
 
-agent = agent.SARSAAgent(alpha, discount, env)
+agent = agent.ValueIterationAgent(alpha, discount, env)
 
 # Set up environment  -----------
 

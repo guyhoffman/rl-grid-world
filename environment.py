@@ -60,7 +60,6 @@ class Environment(object):
                 self.idx2state[idx] = (x, y)
                 self.idx2reward[idx] = self.default_reward
         for position, reward in zip(self.end_positions, self.end_rewards):
-            print(position, reward)
             self.idx2reward[self.state2idx[position]] = reward
 
     # Helper functions for rendering

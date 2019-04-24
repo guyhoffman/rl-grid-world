@@ -7,7 +7,7 @@ import random
 SCALE=100
 
 # Envs are loaded from envs.json
-env = environment.Environment("cliff", start_position=(0,0), scale=SCALE)
+env = environment.Environment("fourbythree", start_position=(0,0), scale=SCALE)
 
 # Agent -------------
 alpha = 0.2

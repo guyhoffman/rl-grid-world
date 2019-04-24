@@ -103,7 +103,7 @@ class BaseAgent:
             elif draw_action == 3:
                 start, end  = (x+.6, y+.5), (x+.4, y+.5)
 
-            cv2.arrowedLine(frame, env.pos_to_frame(start), env.pos_to_frame(end), (255,155,155), 8, line_type=8, tipLength=0.9)
+            cv2.arrowedLine(frame, env.pos_to_frame(start), env.pos_to_frame(end), (255,225,225), 5, line_type=8, tipLength=0.5)
         
         return frame  
             

@@ -36,7 +36,7 @@ class Environment(object):
 
         # Start state
         if self.start_position is None:
-            self.position = self.init_start_state()
+            self.position = self.init_random_start_state()
         else:
             self.position = self.start_position
 
@@ -47,6 +47,9 @@ class Environment(object):
         self.render_background()
 
     def init_lookup_lists(self):
+    """
+    Helper function to initialize quick lookup arrays
+    """   
         self.state2idx = {}
         self.idx2state = {}
         self.idx2reward = {}
@@ -61,9 +64,19 @@ class Environment(object):
 
     # Helper functions for rendering
     def pos_to_frame(self, pos):
-        return (int((pos[0] + 0.0) * self.scale), int((self.gridH - pos[1] + 0.0) * self.scale))
+    """
+    Convert grid position to UI frame
+        :param pos: 2-tuple to convert from gridworld to frame
+    """   
+    return (int((pos[0] + 0.0) * self.scale), int((self.gridH - pos[1] + 0.0) * self.scale))
 
     def text_to_frame(self, frame, text, pos, color=(255, 255, 255), fontscale=1, thickness=2):
+    """
+    Put text at grid position to UI frame coordinates
+        :param frame: frame to draw on
+        :paran text: text to write
+        :param pos: 2-tuple of gridworld position (can be fraction)
+    """   
         font = cv2.FONT_HERSHEY_SIMPLEX
         (w, h), _ = cv2.getTextSize(text, font, fontscale, thickness)
         textpos = (int((pos[0] + 0.0) * self.scale - w / 2), int((self.gridH - pos[1] + 0.0) * self.scale + h / 2))
@@ -89,7 +102,8 @@ class Environment(object):
             x, y = position
             self.text_to_frame(self.frame, text, (x + .5, y + .5), color)
 
-    def init_start_state(self):
+    # Picking a random start position
+    def init_random_start_state(self):
 
         while True:
             preposition = (np.random.choice(self.gridW), np.random.choice(self.gridH))
@@ -100,6 +114,7 @@ class Environment(object):
     def get_state(self):
         return self.state2idx[self.position]
 
+    # Main step generating new state and reward from current state and action
     def step(self, action):
 
         if action >= self.action_space:
@@ -120,18 +135,16 @@ class Environment(object):
         x_within = proposed[0] >= 0 and proposed[0] < self.gridW
         y_within = proposed[1] >= 0 and proposed[1] < self.gridH
         free = proposed not in self.blocked_positions
-        terminal =  self.position in self.end_positions
+        
+        in_terminal =  self.position in self.end_positions
 
-        print ("Should move from", self.position, "to", proposed,"?")
-        if x_within and y_within and free and not terminal:
-            print ("Yes")
+        if x_within and y_within and free and not in_terminal:
             self.position = proposed
 
         next_state = self.state2idx[self.position]
         reward = self.idx2reward[next_state]
 
-        if terminal:
-            print ("I'm moving from terminal so")
+        if in_terminal:  # Should this also be True when moved into terminal?
             done = True
             reward = 0
         else:
@@ -141,7 +154,7 @@ class Environment(object):
 
     def reset_state(self):
         if self.start_position is None:
-            self.position = self.init_start_state()
+            self.position = self.init_random_start_state()
         else:
             self.position = self.start_position
 

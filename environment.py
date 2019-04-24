@@ -120,19 +120,20 @@ class Environment(object):
         x_within = proposed[0] >= 0 and proposed[0] < self.gridW
         y_within = proposed[1] >= 0 and proposed[1] < self.gridH
         free = proposed not in self.blocked_positions
-        not_term = self.position not in self.end_positions
+        terminal =  self.position in self.end_positions
 
-        if x_within and y_within and free and not_term:
-
+        print ("Should move from", self.position, "to", proposed,"?")
+        if x_within and y_within and free and not terminal:
+            print ("Yes")
             self.position = proposed
 
         next_state = self.state2idx[self.position]
         reward = self.idx2reward[next_state]
 
-        if self.position in self.end_positions:
+        if terminal:
+            print ("I'm moving from terminal so")
             done = True
-            if self.position == next_state:
-                reward = 0
+            reward = 0
         else:
             done = False
 

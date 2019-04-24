@@ -47,9 +47,9 @@ class Environment(object):
         self.render_background()
 
     def init_lookup_lists(self):
-    """
-    Helper function to initialize quick lookup arrays
-    """   
+        """
+        Helper function to initialize quick lookup arrays
+        """   
         self.state2idx = {}
         self.idx2state = {}
         self.idx2reward = {}
@@ -60,23 +60,24 @@ class Environment(object):
                 self.idx2state[idx] = (x, y)
                 self.idx2reward[idx] = self.default_reward
         for position, reward in zip(self.end_positions, self.end_rewards):
+            print(position, reward)
             self.idx2reward[self.state2idx[position]] = reward
 
     # Helper functions for rendering
     def pos_to_frame(self, pos):
-    """
-    Convert grid position to UI frame
-        :param pos: 2-tuple to convert from gridworld to frame
-    """   
-    return (int((pos[0] + 0.0) * self.scale), int((self.gridH - pos[1] + 0.0) * self.scale))
+        """
+        Convert grid position to UI frame
+            :param pos: 2-tuple to convert from gridworld to frame
+        """   
+        return (int((pos[0] + 0.0) * self.scale), int((self.gridH - pos[1] + 0.0) * self.scale))
 
     def text_to_frame(self, frame, text, pos, color=(255, 255, 255), fontscale=1, thickness=2):
-    """
-    Put text at grid position to UI frame coordinates
-        :param frame: frame to draw on
-        :paran text: text to write
-        :param pos: 2-tuple of gridworld position (can be fraction)
-    """   
+        """
+        Put text at grid position to UI frame coordinates
+            :param frame: frame to draw on
+            :paran text: text to write
+            :param pos: 2-tuple of gridworld position (can be fraction)
+        """   
         font = cv2.FONT_HERSHEY_SIMPLEX
         (w, h), _ = cv2.getTextSize(text, font, fontscale, thickness)
         textpos = (int((pos[0] + 0.0) * self.scale - w / 2), int((self.gridH - pos[1] + 0.0) * self.scale + h / 2))
@@ -95,7 +96,7 @@ class Environment(object):
             text = str(int(reward))
             if reward > 0.0:
                 text = '+' + text
-            if reward > 0.0:
+            if reward >= 0.0:
                 color = (0, 255, 0)
             else:
                 color = (0, 0, 255)
@@ -136,21 +137,18 @@ class Environment(object):
         y_within = proposed[1] >= 0 and proposed[1] < self.gridH
         free = proposed not in self.blocked_positions
         
-        in_terminal =  self.position in self.end_positions
+        terminal =  self.position in self.end_positions
 
-        if x_within and y_within and free and not in_terminal:
+        if x_within and y_within and free and not terminal:
             self.position = proposed
 
         next_state = self.state2idx[self.position]
         reward = self.idx2reward[next_state]
 
-        if in_terminal:  # Should this also be True when moved into terminal?
-            done = True
+        if terminal:  
             reward = 0
-        else:
-            done = False
 
-        return next_state, reward, done
+        return next_state, reward, terminal
 
     def reset_state(self):
         if self.start_position is None:
@@ -164,12 +162,12 @@ class Environment(object):
         frame = self.frame.copy()
         frame = agent.render(self, frame)
 
-        for i in range(self.state_space):
-            # draw crossed lines
-            x, y = self.idx2state[i]
+        # draw crossed lines
+        # for i in range(self.state_space):
+            # x, y = self.idx2state[i]
 
-            cv2.line(frame, self.pos_to_frame((x,y)), self.pos_to_frame((x+1,y+1)), (255, 255, 255), 2)
-            cv2.line(frame, self.pos_to_frame((x+1,y)), self.pos_to_frame((x,y+1)), (255, 255, 255), 2)
+            # cv2.line(frame, self.pos_to_frame((x,y)), self.pos_to_frame((x+1,y+1)), (255, 255, 255), 2)
+            # cv2.line(frame, self.pos_to_frame((x+1,y)), self.pos_to_frame((x,y+1)), (255, 255, 255), 2)
 
         # draw horizontal lines
         for i in range(self.gridH+1):

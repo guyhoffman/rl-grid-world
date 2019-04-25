@@ -7,14 +7,14 @@ import random
 SCALE=100
 
 # Envs are loaded from envs.json
-env = environment.Environment("fourbythree", start_position=(0,0), scale=SCALE)
+env = environment.Environment("fourbythree", start_position=(1,0), scale=SCALE)
 
 # Agent -------------
 alpha = 0.2
 discount = 0.99
 
-agent = agent.QLearningAgent(alpha, discount, env, epsilon=0.1)
-# agent = agent.SARSAAgent(alpha, discount, env, epsilon=0.1)
+# agent = agent.QLearningAgent(alpha, discount, env, epsilon=0.1)
+agent = agent.SARSAAgent(alpha, discount, env, epsilon=0.1)
 
 # Initialize environment state -----------
 env.reset_state()
@@ -22,8 +22,11 @@ env.reset_state()
 # Learning -----------
 while (True):
     env.render(agent)
+    # input ("=== Episode === ") # Uncomment to inspect agent episode-by-episode
 
     while (True):
+        # input ("== Step == ") # Uncomment to inspect agent step-by-step
+
         # Get current state
         state = env.get_state()
         # Choose action

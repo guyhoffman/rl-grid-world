@@ -2,7 +2,7 @@ import numpy as np
 import random
 import policy
 import cv2
-
+from collections import defaultdict
 
 
 # -----------------------------------------------------
@@ -143,19 +143,40 @@ class MCValueEstimator(BaseAgent):
 # ------------ First-Value MC Prediction ---------------
 # -----------------------------------------------------
 
-class FVMCPrediction(BaseAgent):
+class FVMControl(BaseAgent):
 
-    def get_next_value(self, next_state):
+    def __init__(self, alpha, discount, env, episilon=0.2):
+        super().__init__(alpha, discount, env)
 
-        # estimate V(s) as maximum of Q(state,action) over possible actions
-        value = self.qvalues[state][0]
-       
-        for action in range(self.action_space):
-            q_val = self.qvalues[state][action]
-            if q_val > value:
-                value = q_val
+        ssp = env.state_space
+        asp = env.action_space
+        
+        self.optimal_policy = policy.GreedyPolicy(ssp,asp,self.qvalues, episilon)
+        self.explore_policy = policy.EpsilonGreedyPolicy(ssp, asp, self.qvalues, episilon)
+        self.draw_policy = self.optimal_policy
 
-        return value
+        self.returns = defaultdict(list)
+        self.episode = []
+
+    def update(self, state, action, reward, next_state, terminal):
+
+        self.episode.append((state, action, reward))
+
+        if terminal:
+            G = 0
+            stateactions = [(st, ac) for st, ac, _ in self.episode]
+            for idx, (s, a, r) in list(enumerate(self.episode))[::-1]:
+                G += r
+                print (idx, ": r=", r, "G=", G)
+                if (s,a) not in stateactions[:idx]:
+                    self.returns[(s,a)].append(G)
+                    print("Appending to state/action", s, a, "return", G)
+                    self.qvalues[s][a] = np.mean(self.returns[(s,a)])
+            
+            self.episode = []
+            return True
+        else:
+            return False
 
 
 # -----------------------------------------------------

@@ -7,15 +7,15 @@ import random
 SCALE=100
 
 # Envs are loaded from envs.json
-env = environment.Environment("fourbythree", start_position=(0,0), scale=SCALE)
+env = environment.Environment("fourbythree", start_position=None, scale=SCALE)
 
 # Agent -------------
 alpha = 0.2
 discount = 0.9
 
 # agent = agent.FVMCPrediction(alpha, discount, env)
-agent = agent.FVMCQPrediction(alpha, discount, env)
-# agent = agent.FVMControl(alpha, discount, env)
+# agent = agent.FVMCQPrediction(alpha, discount, env)
+agent = agent.FVMCControl(alpha, discount, env)
 # agent = agent.SARSAAgent(alpha, discount, env, epsilon=0.6)
 # agent = agent.QLearningAgent(alpha, discount, env, epsilon=0.6)
 # agent = agent.EVSarsaAgent(alpha, discount, env)

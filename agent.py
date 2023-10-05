@@ -113,7 +113,7 @@ class BaseAgent:
 # -----------------------------------------------------
 class FVMCPrediction(BaseAgent):
 
-    def __init__(self, alpha, discount, env, episilon=0.2):
+    def __init__(self, alpha, discount, env):
         super().__init__(alpha, discount, env)
 
         self.A = env.action_space
@@ -145,10 +145,88 @@ class FVMCPrediction(BaseAgent):
             return False
 
 # -----------------------------------------------------
-# ------------ First-Visit MC Q-Value Prediction --------
+# ------------ First-Visit MC Q-Value Prediction ------
 # -----------------------------------------------------
 
 class FVMCQPrediction(FVMCPrediction):
+
+    def update(self, state, action, reward, next_state, terminal):
+
+        self.episode.append((state, action, reward))
+
+        if terminal:
+            G = 0
+            stateactions = [(st, ac) for st, ac, _ in self.episode]
+            for idx, (s, a, r) in list(enumerate(self.episode))[::-1]:
+                G = self.discount * G + r
+                print (idx, ": r=", r, "G=", G)
+                if (s,a) not in stateactions[:idx]:
+                    self.returns[(s,a)].append(G)
+                    print("Appending to state/action", s, a, "return", G)
+                    self.qvalues[s][a] = np.mean(self.returns[(s,a)])
+            
+            self.episode = []
+            return True
+        else:
+            return False
+
+# -----------------------------------------------------
+# ------------ First-Visit MC Control -----------------
+# -----------------------------------------------------
+
+class FVMCControl(BaseAgent):
+
+    def __init__(self, alpha, discount, env):
+        super().__init__(alpha, discount, env)
+
+        ssp = env.state_space
+        self.asp = env.action_space
+        
+        self.optimal_policy = policy.GreedyPolicy(ssp, self.asp, self.qvalues)
+        self.explore_policy = self.optimal_policy
+        self.draw_policy = self.optimal_policy
+
+        self.returns = defaultdict(list)
+        self.episode = []
+
+    def update(self, state, action, reward, next_state, terminal):
+
+        # Exploring start action on new episode
+        if len(self.episode) == 0: # New episode
+            action = np.random.choice(self.asp)
+
+        self.episode.append((state, action, reward))
+
+        if terminal:
+            G = 0
+            stateactions = [(st, ac) for st, ac, _ in self.episode]
+            for idx, (s, a, r) in list(enumerate(self.episode))[::-1]:
+                G = self.discount * G + r
+                print (idx, ": r=", r, "G=", G)
+                if (s,a) not in stateactions[:idx]:
+                    self.returns[(s,a)].append(G)
+                    print("Appending to state/action", s, a, "return", G)
+                    self.qvalues[s][a] = np.mean(self.returns[(s,a)])
+            
+            self.episode = []
+            return True
+        else:
+            return False
+
+class FVMControl(BaseAgent):
+
+    def __init__(self, alpha, discount, env, episilon=0.2):
+        super().__init__(alpha, discount, env)
+
+        ssp = env.state_space
+        asp = env.action_space
+        
+        self.optimal_policy = policy.GreedyPolicy(ssp,asp,self.qvalues, episilon)
+        self.explore_policy = policy.EpsilonGreedyPolicy(ssp, asp, self.qvalues, episilon)
+        self.draw_policy = self.optimal_policy
+
+        self.returns = defaultdict(list)
+        self.episode = []
 
     def update(self, state, action, reward, next_state, terminal):
 
@@ -201,41 +279,6 @@ class MCValueEstimator(BaseAgent):
         self.qvalues[state][action] = qval
 
 
-
-class FVMControl(BaseAgent):
-
-    def __init__(self, alpha, discount, env, episilon=0.2):
-        super().__init__(alpha, discount, env)
-
-        ssp = env.state_space
-        asp = env.action_space
-        
-        self.optimal_policy = policy.GreedyPolicy(ssp,asp,self.qvalues, episilon)
-        self.explore_policy = policy.EpsilonGreedyPolicy(ssp, asp, self.qvalues, episilon)
-        self.draw_policy = self.optimal_policy
-
-        self.returns = defaultdict(list)
-        self.episode = []
-
-    def update(self, state, action, reward, next_state, terminal):
-
-        self.episode.append((state, action, reward))
-
-        if terminal:
-            G = 0
-            stateactions = [(st, ac) for st, ac, _ in self.episode]
-            for idx, (s, a, r) in list(enumerate(self.episode))[::-1]:
-                G = self.discount * G + r
-                print (idx, ": r=", r, "G=", G)
-                if (s,a) not in stateactions[:idx]:
-                    self.returns[(s,a)].append(G)
-                    print("Appending to state/action", s, a, "return", G)
-                    self.qvalues[s][a] = np.mean(self.returns[(s,a)])
-            
-            self.episode = []
-            return True
-        else:
-            return False
 
 
 # -----------------------------------------------------

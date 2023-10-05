@@ -108,6 +108,68 @@ class BaseAgent:
         return frame  
             
 
+# -----------------------------------------------------
+# ------------ First-Visit MC Value Prediction --------
+# -----------------------------------------------------
+class FVMCPrediction(BaseAgent):
+
+    def __init__(self, alpha, discount, env, episilon=0.2):
+        super().__init__(alpha, discount, env)
+
+        self.A = env.action_space
+        self.explore_policy = policy.FixedRandomPolicy(env.state_space, env.action_space)
+        self.draw_policy = self.explore_policy
+
+        self.returns = defaultdict(list)
+        self.episode = []
+
+    def update(self, state, action, reward, next_state, terminal):
+
+        self.episode.append((state, action, reward))
+
+        if terminal:
+            G = 0
+            episode_states = [st for st, _, _ in self.episode]
+            for idx, (s, a, r) in list(enumerate(self.episode))[::-1]:
+                G = self.discount * G + r
+                print (idx, ": r=", r, "G=", G)
+                if s not in episode_states[:idx]:
+                    self.returns[s].append(G)
+                    print("Appending to state", s, "return", G)
+                    for a in range(self.A):
+                        self.qvalues[s][a] = np.mean(self.returns[s])
+            
+            self.episode = []
+            return True
+        else:
+            return False
+
+# -----------------------------------------------------
+# ------------ First-Visit MC Q-Value Prediction --------
+# -----------------------------------------------------
+
+class FVMCQPrediction(FVMCPrediction):
+
+    def update(self, state, action, reward, next_state, terminal):
+
+        self.episode.append((state, action, reward))
+
+        if terminal:
+            G = 0
+            stateactions = [(st, ac) for st, ac, _ in self.episode]
+            for idx, (s, a, r) in list(enumerate(self.episode))[::-1]:
+                G = self.discount * G + r
+                print (idx, ": r=", r, "G=", G)
+                if (s,a) not in stateactions[:idx]:
+                    self.returns[(s,a)].append(G)
+                    print("Appending to state/action", s, a, "return", G)
+                    self.qvalues[s][a] = np.mean(self.returns[(s,a)])
+            
+            self.episode = []
+            return True
+        else:
+            return False
+
 class TDAgent(BaseAgent):
 
     def update(self, state, action, reward, next_state, terminal):
@@ -128,7 +190,7 @@ class TDAgent(BaseAgent):
 
 class MCValueEstimator(BaseAgent):
     def __init__(self, alpha, discount, env):
-        super().__init__(alpha,    epsilon, discount, env)
+        super().__init__(alpha, epsilon, discount, env)
 
         self.policy = policy.FixedRandomPolicy(env.state_space, env.action_space) 
         self.explore_policy = self.policy 
@@ -139,9 +201,6 @@ class MCValueEstimator(BaseAgent):
         self.qvalues[state][action] = qval
 
 
-# -----------------------------------------------------
-# ------------ First-Value MC Prediction ---------------
-# -----------------------------------------------------
 
 class FVMControl(BaseAgent):
 
@@ -166,7 +225,7 @@ class FVMControl(BaseAgent):
             G = 0
             stateactions = [(st, ac) for st, ac, _ in self.episode]
             for idx, (s, a, r) in list(enumerate(self.episode))[::-1]:
-                G += r
+                G = self.discount * G + r
                 print (idx, ": r=", r, "G=", G)
                 if (s,a) not in stateactions[:idx]:
                     self.returns[(s,a)].append(G)

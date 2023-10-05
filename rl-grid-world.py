@@ -11,9 +11,11 @@ env = environment.Environment("fourbythree", start_position=(0,0), scale=SCALE)
 
 # Agent -------------
 alpha = 0.2
-discount = 0.99
+discount = 0.9
 
-agent = agent.FVMControl(alpha, discount, env)
+# agent = agent.FVMCPrediction(alpha, discount, env)
+agent = agent.FVMCQPrediction(alpha, discount, env)
+# agent = agent.FVMControl(alpha, discount, env)
 # agent = agent.SARSAAgent(alpha, discount, env, epsilon=0.6)
 # agent = agent.QLearningAgent(alpha, discount, env, epsilon=0.6)
 # agent = agent.EVSarsaAgent(alpha, discount, env)
@@ -21,21 +23,20 @@ agent = agent.FVMControl(alpha, discount, env)
 # Initialize environment state -----------
 env.reset_state()
 
-reward = 0
 # Learning -----------
 while (True):
     env.render(agent)
     input ("=== Episode === ") # Uncomment to inspect agent episode-by-episode
 
     while (True):
-       # input ("== Step == ") # Uncomment to inspect agent step-by-step
+        # input ("== Step == ") # Uncomment to inspect agent step-by-step
 
         # Get current state
         state = env.get_state()
         # Choose action
         action = agent.get_action(state)
         # Try out the action
-        next_state, reward, terminal = env.step(action)
+        next_state, reward, terminal = env.step(action, 0.2)
         # Update the agent's internal variable
         done = agent.update(state, action, reward, next_state, terminal)
 

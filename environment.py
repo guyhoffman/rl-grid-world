@@ -123,7 +123,7 @@ class Environment(object):
         # Action may be distorted with probability error
         if error > 0.0 and np.random.random() < error:
             wrong_action = np.random.choice(4)
-            print (f"Changing action {action} -> {wrong_action}")
+            # print (f"Changing action {action} -> {wrong_action}")
             action = wrong_action
 
         if action == 0:  # North

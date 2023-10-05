@@ -34,6 +34,35 @@
         "default_reward" : -1.0
     },
 
+
+    "tenbyten" : {
+        "gridW" : 10,
+        "gridH" : 10,
+        "end_positions" : [
+            [0, 9],
+            [4, 9],
+            [9, 9]
+        ],
+        "end_rewards" : [
+            -60.0,
+            10.0, 
+            -60.0
+        ],
+        "blocked_positions" : [
+            [1, 1], 
+            [2, 1],
+            [4, 1], 
+            [4, 2],
+            [4, 3],
+            [4, 4],
+            [3, 8], 
+            [4, 8],
+            [5, 8],
+            [6, 8]
+        ],
+        "default_reward" : -0.2
+    },
+
     "cliff" : {
         "gridW" : 12,
         "gridH" : 4,

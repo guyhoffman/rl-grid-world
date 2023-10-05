@@ -192,8 +192,8 @@ class FVMCControl(BaseAgent):
     def update(self, state, action, reward, next_state, terminal):
 
         # Exploring start action on new episode
-        if len(self.episode) == 0: # New episode
-            action = np.random.choice(self.asp)
+        # if len(self.episode) == 0: # New episode
+        #     action = np.random.choice(self.asp)
 
         self.episode.append((state, action, reward))
 
@@ -213,7 +213,7 @@ class FVMCControl(BaseAgent):
         else:
             return False
 
-class FVMControl(BaseAgent):
+class FVMCEpsiControl(BaseAgent):
 
     def __init__(self, alpha, discount, env, episilon=0.2):
         super().__init__(alpha, discount, env)

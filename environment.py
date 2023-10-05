@@ -115,10 +115,16 @@ class Environment(object):
         return self.state2idx[self.position]
 
     # Main step generating new state and reward from current state and action
-    def step(self, action):
+    def step(self, action, error=0.0):
 
         if action >= self.action_space:
             return
+
+        # Action may be distorted with probability error
+        if error > 0.0 and np.random.random() < error:
+            wrong_action = np.random.choice(4)
+            print (f"Changing action {action} -> {wrong_action}")
+            action = wrong_action
 
         if action == 0:  # North
             proposed = (self.position[0], self.position[1] + 1)

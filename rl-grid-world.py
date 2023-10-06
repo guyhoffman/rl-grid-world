@@ -1,5 +1,5 @@
 import environment
-import agent
+import agents
 import numpy as np
 import random
 
@@ -7,19 +7,18 @@ import random
 SCALE=100
 
 # Envs are loaded from envs.json
-env = environment.Environment("tenbyten", start_position=(0,0), scale=SCALE)
+env = environment.Environment("fourbythree", start_position=(0,0), scale=SCALE)
 
 # Agent -------------
 alpha = 0.2
 discount = 0.9
 
-# agent = agent.FVMCPrediction(alpha, discount, env)
-# agent = agent.FVMCQPrediction(alpha, discount, env)
-# agent = agent.FVMCControl(alpha, discount, env)
-agent = agent.FVMCEpsiControl(alpha, discount, env)
-# agent = agent.SARSAAgent(alpha, discount, env, epsilon=0.6)
-# agent = agent.QLearningAgent(alpha, discount, env, epsilon=0.6)
-# agent = agent.EVSarsaAgent(alpha, discount, env)
+# agent = agents.FVMCPrediction(alpha, discount, env)
+# agent = agents.FVMCQPrediction(alpha, discount, env)
+agent = agents.FVMCControl(alpha, discount, env)
+# agent = agents.FVMCEpsiControl(alpha, discount, env, epsilon=0.2)
+# agent = agents.SARSAAgent(alpha, discount, env, epsilon=0.5)
+# agent = agents.QLearningAgent(alpha, discount, env, epsilon=0.5)
 
 # Initialize environment state -----------
 env.reset_state()
@@ -27,7 +26,7 @@ env.reset_state()
 # Learning -----------
 while (True):
     env.render(agent)
-    # input ("=== Episode === ") # Uncomment to inspect agent episode-by-episode
+    input ("=== Episode === ") # Uncomment to inspect agent episode-by-episode
 
     while (True):
         # input ("== Step == ") # Uncomment to inspect agent step-by-step

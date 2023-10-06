@@ -143,6 +143,11 @@ class FVMCEpsiControl(BaseAgent):
         else:
             return False
 
+
+# -----------------------------------------------------
+# ------------ ---- TD Agent -----------------------
+# -----------------------------------------------------
+
 class TDAgent(BaseAgent):
 
     def update(self, state, action, reward, next_state, terminal):

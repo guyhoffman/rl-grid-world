@@ -62,6 +62,12 @@ class EpsilonGreedyPolicy(BasePolicy):
 
 		return chosen_action
 
-# --------------------------------------------------------------
+	def prob(self, state, action):
+		"""Return the probability of taking action given a state."""
+		
+		if action == self.get_best_action(state):
+			return (self.epsilon / self.action_space) + (1 - self.epsilon)
+		else:
+			return (self.epsilon / self.action_space) 
 
 

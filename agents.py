@@ -67,6 +67,8 @@ class FVMCQPrediction(FVMCPrediction):
 
 # -----------------------------------------------------
 # ------------ First-Visit MC Control -----------------
+# --- Set randome starting position and uncomment  ----
+# --- code below for Exploring Starts -----------------
 # -----------------------------------------------------
 
 class FVMCControl(BaseAgent):
@@ -108,6 +110,13 @@ class FVMCControl(BaseAgent):
         else:
             return False
 
+
+# -----------------------------------------------------
+# ------------ First-Visit MC Control -----------------
+# --- with Epsilon-soft exploration   -----------------
+# -----------------------------------------------------
+
+
 class FVMCEpsiControl(BaseAgent):
 
     def __init__(self, alpha, discount, env, episilon=0.2):
@@ -116,7 +125,7 @@ class FVMCEpsiControl(BaseAgent):
         ssp = env.state_space
         asp = env.action_space
         
-        self.optimal_policy = policy.GreedyPolicy(ssp,asp,self.qvalues, episilon)
+        self.optimal_policy = policy.GreedyPolicy(ssp,asp,self.qvalues)
         self.explore_policy = policy.EpsilonGreedyPolicy(ssp, asp, self.qvalues, episilon)
         self.draw_policy = self.optimal_policy
 
@@ -143,6 +152,50 @@ class FVMCEpsiControl(BaseAgent):
         else:
             return False
 
+class OffPolicyMCControl(BaseAgent):
+
+    def __init__(self, alpha, discount, env, epsilon=0.2):
+        super().__init__(alpha, discount, env)
+
+        ssp = env.state_space
+        asp = env.action_space
+
+        self.sumweights = np.zeros((ssp, asp), np.float32)
+
+        self.optimal_policy = policy.GreedyPolicy(ssp, asp, self.qvalues)
+        self.explore_policy = policy.EpsilonGreedyPolicy(ssp, asp, self.qvalues, epsilon)
+        self.draw_policy = self.optimal_policy
+
+        self.episode = []
+
+    def update(self, state, action, reward, next_state, terminal):
+
+        self.episode.append((state, action, reward))
+
+        if terminal:
+            G = 0
+            W = 1
+            stateactions = [(st, ac) for st, ac, _ in self.episode]
+            for idx, (s, a, r) in list(enumerate(self.episode))[::-1]:
+                G = self.discount * G + r
+                print (idx, ": r=", r, "G=", G)
+                self.sumweights[s][a] += W
+                self.qvalues[s][a] += (W / self.sumweights[s][a]) * (G - self.qvalues[s][a])
+                if self.optimal_policy.get_best_action(s) != a:
+                    break
+
+                W *= 1 / self.explore_policy.prob(s, a)
+            
+            self.episode = []
+            return True
+        else:
+            return False
+
+
+
+# -----------------------------------------------------
+# ------------ Off-policy MC Control  -----------------
+# -----------------------------------------------------
 
 # -----------------------------------------------------
 # ------------ ---- TD Agent -----------------------

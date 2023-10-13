@@ -189,7 +189,7 @@ class OffPolicyMCControl(BaseAgent):
             stateactions = [(st, ac) for st, ac, _ in self.episode]
             for idx, (s, a, r) in list(enumerate(self.episode))[::-1]:
                 G = self.discount * G + r
-                print (idx, ": r=", r, "G=", G)
+                print (f"{idx}: s={s}, a={a}, r={r}, G={G}")
                 self.sumweights[s][a] += W
                 self.qvalues[s][a] += (W / self.sumweights[s][a]) * (G - self.qvalues[s][a])
                 if self.optimal_policy.get_best_action(s) != a:

@@ -12,6 +12,7 @@ class FVMCPrediction(BaseAgent):
         super().__init__(alpha, discount, env)
 
         self.A = env.action_space
+        
         self.explore_policy = policy.FixedRandomPolicy(env.state_space, env.action_space)
         self.draw_policy = self.explore_policy
 
@@ -84,10 +85,10 @@ class FVMCControl(BaseAgent):
     def __init__(self, alpha, discount, env):
         super().__init__(alpha, discount, env)
 
-        self.ssp = env.state_space
-        self.asp = env.action_space
+        self.Sigma = env.state_space
+        self.A = env.action_space
         
-        self.optimal_policy = policy.GreedyPolicy(self.ssp, self.asp, self.qvalues)
+        self.optimal_policy = policy.GreedyPolicy(self.Sigma, self.A, self.qvalues)
         self.explore_policy = self.optimal_policy
         self.draw_policy = self.optimal_policy
 
@@ -130,14 +131,14 @@ class FVMCControl(BaseAgent):
 
 class FVMCEpsiControl(BaseAgent):
 
-    def __init__(self, alpha, discount, env, episilon=0.2):
+    def __init__(self, alpha, discount, env, epsilon=0.2):
         super().__init__(alpha, discount, env)
 
-        ssp = env.state_space
-        asp = env.action_space
+        Sigma = env.state_space
+        A = env.action_space
         
-        self.optimal_policy = policy.GreedyPolicy(ssp,asp,self.qvalues)
-        self.explore_policy = policy.EpsilonGreedyPolicy(ssp, asp, self.qvalues, episilon)
+        self.optimal_policy = policy.GreedyPolicy(Sigma, A, self.qvalues)
+        self.explore_policy = policy.EpsilonGreedyPolicy(Sigma, A, self.qvalues, epsilon)
         self.draw_policy = self.optimal_policy
 
         self.returns = defaultdict(list)
@@ -168,13 +169,13 @@ class OffPolicyMCControl(BaseAgent):
     def __init__(self, alpha, discount, env, epsilon=0.2):
         super().__init__(alpha, discount, env)
 
-        ssp = env.state_space
-        asp = env.action_space
+        Sigma = env.state_space
+        A = env.action_space
 
-        self.sumweights = np.zeros((ssp, asp), np.float32)
+        self.sumweights = np.zeros((Sigma, A), np.float32)
 
-        self.optimal_policy = policy.GreedyPolicy(ssp, asp, self.qvalues)
-        self.explore_policy = policy.EpsilonGreedyPolicy(ssp, asp, self.qvalues, epsilon)
+        self.optimal_policy = policy.GreedyPolicy(Sigma, A, self.qvalues)
+        self.explore_policy = policy.EpsilonGreedyPolicy(Sigma, A, self.qvalues, epsilon)
         self.draw_policy = self.optimal_policy
 
         self.episode = []

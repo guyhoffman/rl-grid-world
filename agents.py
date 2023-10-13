@@ -27,7 +27,7 @@ class FVMCPrediction(BaseAgent):
             episode_states = [st for st, _, _ in self.episode]
             for idx, (s, a, r) in list(enumerate(self.episode))[::-1]:
                 G = self.discount * G + r
-                print (idx, ": r=", r, "G=", G)
+                print (idx, ": s=", s, ", r=", r, "G=", G)
                 if s not in episode_states[:idx]:
                     self.returns[s].append(G)
                     print("Appending to state", s, "return", G)
@@ -45,6 +45,14 @@ class FVMCPrediction(BaseAgent):
 
 class FVMCQPrediction(FVMCPrediction):
 
+    # # Uncomment for exploring starts
+    # def get_action(self, state):
+    #     if len(self.episode) == 0:
+    #         return np.random.choice(self.A)
+    #     else:
+    #         return BaseAgent.get_action(self, state)
+    
+
     def update(self, state, action, reward, next_state, terminal):
 
         self.episode.append((state, action, reward))
@@ -54,7 +62,7 @@ class FVMCQPrediction(FVMCPrediction):
             stateactions = [(st, ac) for st, ac, _ in self.episode]
             for idx, (s, a, r) in list(enumerate(self.episode))[::-1]:
                 G = self.discount * G + r
-                print (idx, ": r=", r, "G=", G)
+                print (f"{idx}: s={s}, a={a}, r={r}, G={G}")
                 if (s,a) not in stateactions[:idx]:
                     self.returns[(s,a)].append(G)
                     print("Appending to state/action", s, a, "return", G)
@@ -76,21 +84,24 @@ class FVMCControl(BaseAgent):
     def __init__(self, alpha, discount, env):
         super().__init__(alpha, discount, env)
 
-        ssp = env.state_space
+        self.ssp = env.state_space
         self.asp = env.action_space
         
-        self.optimal_policy = policy.GreedyPolicy(ssp, self.asp, self.qvalues)
+        self.optimal_policy = policy.GreedyPolicy(self.ssp, self.asp, self.qvalues)
         self.explore_policy = self.optimal_policy
         self.draw_policy = self.optimal_policy
 
         self.returns = defaultdict(list)
         self.episode = []
 
-    def update(self, state, action, reward, next_state, terminal):
+    # # Uncomment for exploring starts
+    # def get_action(self, state):
+    #     if len(self.episode) == 0:
+    #         return np.random.choice(self.A)
+    #     else:
+    #         return BaseAgent.get_action(self, state)
 
-        # Exploring start action on new episode
-        # if len(self.episode) == 0: # New episode
-        #     action = np.random.choice(self.asp)
+    def update(self, state, action, reward, next_state, terminal):
 
         self.episode.append((state, action, reward))
 

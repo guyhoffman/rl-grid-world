@@ -1,7 +1,5 @@
 import environment
 import agents
-import numpy as np
-import random
 
 # Visual scale
 SCALE=100
@@ -17,7 +15,7 @@ discount = 0.9
 # agent = agents.FVMCQPrediction(alpha, discount, env)
 # agent = agents.FVMCControl(alpha, discount, env)
 # agent = agents.FVMCEpsiControl(alpha, discount, env, epsilon=0.2)
-agent = agents.OffPolicyMCControl(alpha, discount, env, epsilon=0.2)
+# agent = agents.OffPolicyMCControl(alpha, discount, env, epsilon=0.2)
 
 # agent = agents.SARSAAgent(alpha, discount, env, epsilon=0.5)
 # agent = agents.QLearningAgent(alpha, discount, env, epsilon=0.5)

@@ -110,7 +110,7 @@ class FVMCControl(BaseAgent):
             stateactions = [(st, ac) for st, ac, _ in self.episode]
             for idx, (s, a, r) in list(enumerate(self.episode))[::-1]:
                 G = self.discount * G + r
-                print (idx, ": r=", r, "G=", G)
+                print (f"{idx}: s={s}, a={a}, r={r}, G={G}")
                 if (s,a) not in stateactions[:idx]:
                     self.returns[(s,a)].append(G)
                     print("Appending to state/action", s, a, "return", G)
@@ -152,7 +152,7 @@ class FVMCEpsiControl(BaseAgent):
             stateactions = [(st, ac) for st, ac, _ in self.episode]
             for idx, (s, a, r) in list(enumerate(self.episode))[::-1]:
                 G = self.discount * G + r
-                print (idx, ": r=", r, "G=", G)
+                print (f"{idx}: s={s}, a={a}, r={r}, G={G}")
                 if (s,a) not in stateactions[:idx]:
                     self.returns[(s,a)].append(G)
                     print("Appending to state/action", s, a, "return", G)

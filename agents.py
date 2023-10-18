@@ -164,6 +164,11 @@ class FVMCEpsiControl(BaseAgent):
         else:
             return False
 
+
+# -----------------------------------------------------
+# ------------ Off-policy MC Control  -----------------
+# -----------------------------------------------------
+
 class OffPolicyMCControl(BaseAgent):
 
     def __init__(self, alpha, discount, env, epsilon=0.2):
@@ -204,11 +209,6 @@ class OffPolicyMCControl(BaseAgent):
             return False
 
 
-
-# -----------------------------------------------------
-# ------------ Off-policy MC Control  -----------------
-# -----------------------------------------------------
-
 # -----------------------------------------------------
 # ------------ ---- TD Agent -----------------------
 # -----------------------------------------------------
@@ -220,46 +220,15 @@ class TDAgent(BaseAgent):
         # Q(s,a) = (1.0 - alpha) * Q(s,a) + alpha * (R + discount * V(s'))
 
         if terminal==True:
-            qval_dash = 0
+            qval_next = 0
         else:
-            qval_dash = reward + self.discount * self.get_next_value(next_state)
+            qval_next = reward + self.discount * self.get_next_value(next_state)
             
         qval_old = self.qvalues[state][action]      
-        qval_new = (1.0 - self.alpha) * qval_old + self.alpha * qval_dash
+        qval_new = (1.0 - self.alpha) * qval_old + self.alpha * qval_next
 
         self.qvalues[state][action] = qval_new
         return terminal
-
-
-class MCValueEstimator(BaseAgent):
-    def __init__(self, alpha, discount, env):
-        super().__init__(alpha, epsilon, discount, env)
-
-        self.policy = policy.FixedRandomPolicy(env.state_space, env.action_space) 
-        self.explore_policy = self.policy 
-    
-    def update(self, state, action, reward, next_state, next_action, done):
-        qval_old = self.qvalues[state][action]      
-        qval = reward + self.discount * ((1.0 - self.alpha)* qval_old + self.alpha * self.qvalues[next_state][action])
-        self.qvalues[state][action] = qval
-
-
-
-
-# -----------------------------------------------------
-# ------------ ---- Q-Learning Agent -----------------------
-# -----------------------------------------------------
-
-class QLearningAgent(TDAgent):
-
-    def __init__(self, alpha,  discount, environment, epsilon=0.2):
-        super().__init__(alpha, discount, environment)
-
-        self.optimal_policy = policy.GreedyPolicy(environment.state_space, environment.action_space, self.qvalues)
-        self.explore_policy = policy.EpsilonGreedyPolicy(environment.state_space, environment.action_space, self.qvalues, epsilon)
-
-    def get_next_value(self, next_state):
-        return self.qvalues[next_state][self.get_optimal_action(next_state)]
 
 
 # -----------------------------------------------------
@@ -293,6 +262,61 @@ class SARSAAgent(TDAgent):
     def get_next_value(self, next_state):
         return self.qvalues[next_state][self.next_action]
 
+
+
+
+
+# -----------------------------------------------------
+# ------------ ---- Q-Learning Agent -----------------------
+# -----------------------------------------------------
+
+class QLearningAgent(TDAgent):
+
+    def __init__(self, alpha,  discount, environment, epsilon=0.2):
+        super().__init__(alpha, discount, environment)
+
+        self.optimal_policy = policy.GreedyPolicy(environment.state_space, environment.action_space, self.qvalues)
+        self.explore_policy = policy.EpsilonGreedyPolicy(environment.state_space, environment.action_space, self.qvalues, epsilon)
+
+    def get_next_value(self, next_state):
+        return self.qvalues[next_state][self.get_optimal_action(next_state)]
+
+
+
+# -----------------------------------------------------
+# ------------------ Expected Value SARSA Agent ---------------------
+# -----------------------------------------------------
+    
+class EVSarsaAgent(BaseAgent):
+    
+    def get_next_value(self, next_state):
+        
+        # estimate V(s) as expected value of Q(state,action) over possible actions assuming epsilon-greedy policy
+        # V(s) = sum [ p(a|s) * Q(s,a) ]
+          
+        best_action = 0
+        max_val = self.qvalues[next_state][0]
+        
+        for action in range(self.action_space):
+            
+            q_val = self.qvalues[next_state][action]
+            if q_val > max_val:
+                max_val = q_val
+                best_action = action
+        
+        state_value = 0.0
+        n_actions = self.action_space
+        
+        for action in range(self.action_space):
+            
+            if action == best_action:
+                trans_prob = 1.0 - self.epsilon + self.epsilon/n_actions
+            else:
+                trans_prob = self.epsilon/n_actions
+                   
+            state_value = state_value + trans_prob * self.qvalues[next_state][action]
+
+        return state_value
 
 # -----------------------------------------------------
 # ------------------- n-Step SARSA Agent ------------------
@@ -373,38 +397,3 @@ class NStepSARSAAgent(BaseAgent):
         else:
             return True
 
-
-# -----------------------------------------------------
-# ------------------ Expected Value SARSA Agent ---------------------
-# -----------------------------------------------------
-    
-class EVSarsaAgent(BaseAgent):
-    
-    def get_next_value(self, next_state):
-        
-        # estimate V(s) as expected value of Q(state,action) over possible actions assuming epsilon-greedy policy
-        # V(s) = sum [ p(a|s) * Q(s,a) ]
-          
-        best_action = 0
-        max_val = self.qvalues[next_state][0]
-        
-        for action in range(self.action_space):
-            
-            q_val = self.qvalues[next_state][action]
-            if q_val > max_val:
-                max_val = q_val
-                best_action = action
-        
-        state_value = 0.0
-        n_actions = self.action_space
-        
-        for action in range(self.action_space):
-            
-            if action == best_action:
-                trans_prob = 1.0 - self.epsilon + self.epsilon/n_actions
-            else:
-                trans_prob = self.epsilon/n_actions
-                   
-            state_value = state_value + trans_prob * self.qvalues[next_state][action]
-
-        return state_value
